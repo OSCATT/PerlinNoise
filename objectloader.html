@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>IMPORTS A ROCKET</title>
+		<style>
+			body { margin: 0; }
+			canvas { width: 100%; height: 100% }
+		</style>
+	</head>
+	<body>
+
+		<script src="GLTFLoader.js"></script>
+		<script src="js/three.js"></script>
+
+		<script>
+
+		var scene = new THREE.Scene();
+		var camera = new THREE.PerspectiveCamera( 90, window.innerWidth/window.innerHeight, 0.1, 1000 );
+		var renderer = new THREE.WebGLRenderer();
+		renderer.setSize( window.innerWidth, window.innerHeight );
+		document.body.appendChild( renderer.domElement );
+
+    var loader = new THREE.GLTFLoader();
+
+    loader.load( 'the_rocket/scene.gltf', function ( gltf ) {
+			gltf.animations; // Array<THREE.AnimationClip>
+			gltf.scene; // THREE.Scene
+			gltf.scenes; // Array<THREE.Scene>
+			gltf.cameras; // Array<THREE.Camera>
+			gltf.asset; // Object
+
+  	scene.add( gltf.scene );
+
+  }, undefined, function ( error ) {
+
+  	console.error( error );
+
+  } );
+	
+	camera.position.z = 10;
+	var animate = function () {
+		requestAnimationFrame( animate );
+
+		//cube.rotation.x += 0.01;
+		//cube.rotation.y += 0.01;
+
+		renderer.render( scene, camera );
+
+	};
+
+
+	animate();
+
+		</script>
+	</body>
+</html>
