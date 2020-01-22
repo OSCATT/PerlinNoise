@@ -191,10 +191,11 @@
       return 2.2 * n_xyz;
     }
 
-    // Include the Ashima code here!
+
 
     varying vec2 vUv;
     varying float noise;
+    uniform float time;
 
     float turbulence( vec3 p ) {
         float w = 100.0;
@@ -210,9 +211,9 @@
 
         vUv = uv;
 
-        noise = 10.0 *  -.10 * turbulence( .5 * normal );
-        float b = 5.0 * pnoise( 0.05 * position, vec3( 100.0 ) );
-        float displacement = - 10. * noise + b;
+        noise = 10.0 *  -.10 * turbulence( .5 * normal + time );
+        float b = 5.0 * pnoise( 0.05 * position + vec3( 2.0 * time ), vec3( 100.0 ) );
+        float displacement = - noise + b;
 
         vec3 newPosition = position + normal * displacement;
         gl_Position = projectionMatrix * modelViewMatrix * vec4( newPosition, 1.0 );
@@ -222,16 +223,24 @@
 </script>
 
     <script type="x-shader/x-vertex" id="fragmentShader">
-        // Put the Fragment Shader code here
-        varying vec2 vUv;
-        varying float noise;
+    varying vec2 vUv;
+    varying float noise;
+    uniform sampler2D tExplosion;
+
+    float random( vec3 scale, float seed ){
+return fract( sin( dot( gl_FragCoord.xyz + seed, scale ) ) * 43758.5453 + seed ) ;
+}
 
 void main() {
 
-  // compose the colour using the UV coordinate
-  // and modulate it with the noise like ambient occlusion
-  vec3 color = vec3( vUv * ( 1. - 2. * noise ), 0.0 );
-  gl_FragColor = vec4( color.rgb, 1.0 );
+// get a random offset
+float r = .01 * random( vec3( 12.9898, 208.233, 231.7182 ), 400.0 );
+// lookup vertically in the texture, using noise and offset
+// to get the right RGB colour
+vec2 tPos = vec2( 0,1.9 * noise + r );
+vec4 color = texture2D( tExplosion, tPos);
+
+gl_FragColor = vec4( color.rgb, 1.0 );
 
 }
     </script>
@@ -249,6 +258,7 @@ void main() {
     scene,
     camera,
     mesh,
+    mesh1,
     start = Date.now(),
     fov = 30;
 
@@ -265,7 +275,19 @@ window.addEventListener( 'load', function() {
         10000 );
     camera.position.z = 100;
 
+
     material = new THREE.ShaderMaterial( {
+
+      uniforms: {
+        tExplosion: {
+          type: "t",
+          value: THREE.ImageUtils.loadTexture( 'Rainbow.jpg' )
+        },
+        time: { // float initialized to 0
+          type: "f",
+          value: 0.0
+        }
+      },
     vertexShader: document.getElementById( 'vertexShader' ).textContent,
     fragmentShader: document.getElementById( 'fragmentShader' ).textContent
     } );
@@ -275,7 +297,12 @@ window.addEventListener( 'load', function() {
         material
     );
     scene.add( mesh );
-
+    //for ( let i = 0; i < 20; i ++ ){
+    //mesh1 = mesh.clone();
+    //mesh1.position.x = Math.random() * 500 - 40;
+    //mesh1.position.y = Math.random() * 500 - 40;
+    //scene.add(mesh1);
+    //}
     renderer = new THREE.WebGLRenderer();
     renderer.setSize( window.innerWidth, window.innerHeight );
     renderer.setPixelRatio( window.devicePixelRatio );
@@ -300,6 +327,12 @@ function onWindowResize () {
 }
 
 function render() {
+
+
+    mesh.rotation.x += 0.0;
+    mesh.rotation.y += 0.0;
+
+    material.uniforms[ 'time' ].value = .00025 * ( Date.now() - start );
 
     renderer.render( scene, camera );
     requestAnimationFrame( render );
